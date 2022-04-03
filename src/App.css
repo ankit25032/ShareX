@@ -1,9 +1,22 @@
 .app{
+  
   width:350px;
   height:500px ;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
+  background-color: white;
+  align-items: center;
+}
+
+.app2{
+  position: absolute;
+  width:350px;
+  height:500px ;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  background-color: white;
   align-items: center;
 }
 
@@ -44,6 +57,8 @@
   border: 1px solid grey;
   padding-left: 10px;
   padding-right: 10px;
+  margin: 0;
+  overflow-x: hidden;
 }
 .back-btn{
   
@@ -124,16 +139,20 @@ margin-left: 5px;
   text-align: left;
   font-size: 13px;
   position: relative;
-  left: 150px;
-  width: 170px;
+  left: 100px;
+  max-width:230px;
+  min-width: none;
   margin-right: auto;
   background: #e9eafd;
   color: #787986;
   padding-left: 4px;
   margin-top: 10px;
-
+  word-wrap: break-word;
 }
+p{
 
+  word-break: break-all;
+}
 .outgoing{
   display: flex;
   justify-content: flex-start;
@@ -157,17 +176,20 @@ padding-left: 5px;
  left: 120px;
  padding: 5px;
 }
-.file-incoming svg{
+.file-incoming svg,.file-outgoing svg{
+  color: white;
   width: 40px;
   height: 40px;
 }
 .download-btn{
   cursor: pointer;
-  margin-left: 10px;
+  margin-left: 14px;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  text-align: center;
+  max-width: max-content;
 
 }
 .download-btn p{
@@ -185,4 +207,51 @@ padding-left: 5px;
 }
 .link{
   display: none;
+}
+
+.file-outgoing {
+
+  justify-content: flex-start;
+ align-items: center;
+ width: 200px;
+ padding: 5px;
+}
+
+.spinner {
+  animation: rotate 2s linear infinite;
+  z-index: 2;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -25px 0 0 -25px;
+  width: 50px;
+  height: 50px;
+  
+}
+
+.spinner .path{
+  stroke: hsl(210, 70, 75);
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
 }

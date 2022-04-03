@@ -9,8 +9,12 @@ function Home() {
   const [socket, setSocket] = useState(null);
   const dispatch = useDispatch();
   const link = useRef();
+  const connected=localStorage.getItem('connected');
 
   useEffect(() => {
+    console.log(!connected);
+    if(connected=='false'||connected==undefined||connected==null){
+      console.log(connected);
     roomID();
     try {
       const newSocket = io(`https://socket.ankitzxi05.repl.co`, {
@@ -22,6 +26,23 @@ function Home() {
       console.log(error);
       console.log("====================================");
     }
+  }
+  else{
+    console.log("gettinggg....");
+    const newSocket = io(`https://socket.ankitzxi05.repl.co`, {
+      transports: ["websocket", "polling", "flashsocket"],
+    });
+    setSocket(newSocket);
+    dispatch(searchvalue(newSocket));
+    const rand=Number(localStorage.getItem('roomID'))
+    console.log(rand);
+    setroomid(rand);
+    const val = { id: rand };
+    console.log(val);
+    newSocket.emit("joinRoom", val);
+      link && link.current.click();
+    
+  }
   }, []);
 
   function roomID(min = 10000, max = 99999) {
@@ -35,16 +56,21 @@ function Home() {
 
   socket &&
     socket.on("roomJoined", (data) => {
+     
       if (Number(data.id) === Number(localStorage.getItem("roomID"))) {
         joinRoom();
+        localStorage.setItem('connected',true);
         dispatch(searchvalue(socket));
         link && link.current.click();
       }
+
+      
     });
 
   const joinRoom = async () => {
     const val = { id: roomid };
     socket && socket.emit("joinRoom", val);
+   
   };
 
   return (

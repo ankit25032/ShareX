@@ -1,23 +1,26 @@
 import { useEffect, useRef, useState } from "react";
-
 import { useNavigate } from "react-router-dom";
-import { InfinitySpin } from "react-loader-spinner";
+import { InfinitySpin, TailSpin } from "react-loader-spinner";
 import { IoFileTrayOutline } from "react-icons/io5";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-
-import File from "./File";
+import { BsDownload } from "react-icons/bs";
+import { FileIcon, defaultStyles } from "react-file-icon";
+import storage from "./firebase";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
 function Main() {
   let buff = [];
   let history = useNavigate();
+  const loader =
+    "<svg class='spinner' viewBox='0 0 50 50'><circle class='path' cx='25' cy='25' r='20' fill='none' stroke-width='5'></circle></svg>";
+  const tick =
+    "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><path d='M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z'/></svg>";
 
   const [data, setdata] = useState("");
-  const [file, setfile] = useState("");
-  const [totalSize, settotalSize] = useState();
-  const [transmitted, settransmitted] = useState(1);
-  const [buffer, setbuffer] = useState([]);
-
+  const [id, setid] = useState();
+  const [downloading, setdownloading] = useState(false);
+const [change,setchange]=useState(1);
   const [messages, setmessages] = useState([]);
   const socket = useSelector((state) => state.setsearch);
   const [filebase, setfilebase] = useState([]);
@@ -28,51 +31,128 @@ function Main() {
   const link = useRef();
 
   const content = useRef();
+  useEffect(()=>{
+    setid(localStorage.getItem('roomID'))
+    let premessage=localStorage.getItem('messages');
+    console.log(premessage);
+      console.log(content.current);
+      content.current.innerHTML=premessage
+      setloading(false)
+  },[])
+
+  useEffect(()=>{
+    console.log("calling useefgf");
+      const data= content.current.innerHTML
+        localStorage.setItem('messages',data);
+  
+  },[messages,change])
+
+ 
+
+  function bytesToSize(bytes) {
+    var sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    if (bytes == 0) return "0 Byte";
+    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+    return Math.round(bytes / Math.pow(1024, i), 2) + " " + sizes[i];
+  }
+
+  function handleDownload(e, data) {
+    const svg = e.target.innerHTML;
+    e.target.innerHTML = "";
+    console.log(e.target);
+    e.target.innerHTML = loader;
+    const xhr = new XMLHttpRequest();
+    xhr.onload = () => {
+      console.log("complete");
+    };
+    xhr.addEventListener("progress", function (z) {
+      var percent_complete = (z.loaded / z.total) * 100;
+      if (percent_complete === 100) {
+        console.log(e);
+        console.log("complete");
+        e.target.innerHTML = "";
+        e.target.innerHTML = svg;
+      }
+      console.log(percent_complete);
+    });
+
+    xhr.responseType = "blob";
+    xhr.onload = (event) => {
+      const blob = xhr.response;
+      const uri = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = uri;
+      a.download = data.name;
+      a.click();
+      a.remove();
+    };
+    xhr.open("GET", data.durl);
+    xhr.send();
+  }
 
   useEffect(() => {
     let total_size = 0;
     socket.on("sent-message", (data) => {
       handleAllMessages(data);
     });
+
     socket.on("clientDisconnect", (data) => {
       link && link.current.click();
     });
+
     socket.on("send-file", (data) => {
-      const ele = <File data={data} />;
-      setmessages([...messages, ele]);
+      console.log(data );
+      const ele = (
+        <>
+          <div className="outgoing file-outgoing ">
+            <FileIcon
+              className="file-icon-incoming"
+              extension={
+                data &&
+                data.name.substring(
+                  data.name.lastIndexOf(".") + 1,
+                  data.name.length
+                )
+              }
+              {...defaultStyles.docx}
+            />
+            <p>
+              {data &&
+                data.name.substring(0, 10) +
+                  "..." +
+                  data.name.substring(
+                    data.name.lastIndexOf(".") + 1,
+                    data.name.length
+                  )}
+            </p>
+
+            <div className="download-btn">
+              <a target="_blank" href={data.durl}>
+                <BsDownload size={12} />
+              </a>
+
+              <p>{bytesToSize(data.size)}</p>
+            </div>
+          </div>
+        </>
+      );
+      setmessages((messages) => [...messages, ele]);
     });
 
-    socket.on("metadata", (data) => {
-      console.log(data.meta);
-      settotalSize(data.meta);
-      socket.emit("fs-start", {});
-    });
-    socket.on("fs-share", (data) => {
-      // settransmitted((transmitted) => transmitted + data.buffer.bytesLength);
-      // console.log("====================================");
-      // console.log(totalSize);
-      // console.log("====================================");
-      if (data.length >= 0) {
-        console.log(data);
-        setbuffer((buffer) => [...buffer, ...new Uint8Array(data.buffer)]);
-        socket.emit("fs-start", {});
-      } else {
-        console.log("sent");
-      }
-    });
+
 
     return () => {
-      socket.close();
+      // socket.close();
     };
   }, []);
 
-  setTimeout(() => {
-    setloading(false);
-  }, 2000);
+
+    
+  
 
   function handleAllMessages(data) {
-    const roomid = localStorage.getItem("roomID");
     console.log(data);
+    const roomid = localStorage.getItem("roomID");
     const ele = (
       <>
         <div key={roomid + data} className="outgoing">
@@ -80,9 +160,7 @@ function Main() {
         </div>
       </>
     );
-    console.log("====================================");
-    console.log(messages);
-    console.log("====================================");
+
     setmessages((messages) => [...messages, ele]);
   }
 
@@ -101,40 +179,114 @@ function Main() {
     const val = { id: roomid, message: sendtxt.current.value };
     socket.emit("message", val);
   }
+  function random(min = 1, max = 999999) {
+    let difference = max - min;
+    let rand = Math.random();
+    rand = Math.floor(rand * difference);
+    rand = rand + min;
+
+    return rand;
+  }
 
   async function handleFileChange(e) {
     const file = e.target.files[0];
-    console.log(file);
-    setfile(file);
+    const name = file.name;
+    const size = file.size;
+    const rand = random();
+    const ele = (
+      <>
+        <div className=" incoming file-incoming ">
+          <FileIcon
+            className="file-icon-incoming"
+            extension={
+              name && name.substring(name.lastIndexOf(".") + 1, name.length)
+            }
+            {...defaultStyles.docx}
+          />
+          <p>
+            {name &&
+              name.substring(0, 10) +
+                "..." +
+                name.substring(name.lastIndexOf(".") + 1, name.length)}
+          </p>
+
+          <div className="download-btn">
+            <a className={rand.toString()}>
+              <TailSpin />
+            </a>
+
+            <p>{bytesToSize(size)}</p>
+          </div>
+        </div>
+      </>
+    );
+
+    setmessages((messages) => [...messages, ele]);
+
+    var reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function () {
+      console.log(reader.result);
+      const spaceRef = ref(storage, name + random());
+      uploadString(spaceRef, reader.result, "data_url").then((snapshot) => {
+        const tag = document.getElementsByClassName(rand.toString());
+        console.log(tag[0].innerHTML);
+        tag[0].innerHTML = "";
+        tag[0].innerHTML = tick;
+        console.log("Uploaded a base64 string!");
+
+        getDownloadURL(spaceRef).then((url) => {
+          console.log(url);
+          const file = {
+            durl: url,
+            name: name,
+            size: size,
+            id:id
+          };
+          socket.emit("file", file);
+        });
+        const data=change+1;
+
+        
+        setchange(data)
+      });
+    };
+    reader.onerror = function (error) {
+      console.log("Error: ", error);
+    };
   }
   async function handleFile() {
-    const blob = new Blob(new Uint8Array(buffer));
-    var url = URL.createObjectURL(blob);
-    console.log(url);
-    const ele = <File blob={url} />;
-    setmessages([...messages, ele]);
-
-    // fileinput.current.click();
+    fileinput.current.click();
   }
 
   return (
     <>
       <div className="container">
         {loading ? (
-          <div className="app">
+          <div className="app2">
             <InfinitySpin color="dodgerblue" />
           </div>
-        ) : (
+        ) :null}
           <>
             <div className="back-btn">
               <img
-                onClick={() => history(-1)}
+                onClick={() => {
+                  socket.emit('client-Diss',{id})
+                  socket.close();
+                  localStorage.setItem('connected',false)
+                  localStorage.removeItem('messages')
+                  
+                  history(-1)
+                }}
                 alt="back-btn"
                 src="https://img.icons8.com/ios-glyphs/30/000000/arrow-pointing-left--v2.png"
               />
               <button
                 onClick={() => {
-                  socket.close();
+                  socket.emit('client-Diss',{id})
+                  socket.close();                
+                  localStorage.setItem('connected',false)
+                  localStorage.removeItem('messages')
                   link && link.current.click();
                 }}
                 className="disconnect"
@@ -173,7 +325,7 @@ function Main() {
               </div>
             </div>
           </>
-        )}
+        
       </div>
       <Link ref={link} className="link" to="/"></Link>
     </>
