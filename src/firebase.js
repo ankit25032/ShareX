@@ -2,11 +2,11 @@ import {initializeApp} from 'firebase/app';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAw01qHrB6Zubb_0t6DbI6CV9IzXMBEov8",
-    authDomain: "sharex-ca8a4.firebaseapp.com",
-    databaseURL: "https://sharex-ca8a4-default-rtdb.firebaseio.com",
+    apiKey: `${process.env.REACT_APP_API_KEY}`,
+    authDomain:`${process.env.REACT_APP_AUTH_DOMAIN }` ,
+    databaseURL: `${process.env.REACT_APP_DATABASE_URL}`,
     projectId: "sharex-ca8a4",
-    storageBucket: "sharex-ca8a4.appspot.com",
+    storageBucket: `${process.env.REACT_APP_BUCKET_ID}`,
     messagingSenderId: "576843458257",
     appId: "1:576843458257:web:9a9e2e293a1341f2e747f0"
   };

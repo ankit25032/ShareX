@@ -10,17 +10,29 @@ function Home() {
   const dispatch = useDispatch();
   const link = useRef();
   const connected=localStorage.getItem('connected');
-
+  function roomID(min = 10000, max = 99999) {
+    let difference = max - min;
+    let rand = Math.random();
+    rand = Math.floor(rand * difference);
+    rand = rand + min;
+    localStorage.setItem("roomID", rand);
+    setroomid(rand);
+    return rand;
+  }
   useEffect(() => {
     console.log(!connected);
-    if(connected=='false'||connected==undefined||connected==null){
+    if(connected=='false'||connected==undefined||connected==null||connected==false){
       console.log(connected);
-    roomID();
+   const roomidd= roomID();
+    
     try {
       const newSocket = io(`https://socket.ankitzxi05.repl.co`, {
         transports: ["websocket", "polling", "flashsocket"],
       });
       setSocket(newSocket);
+      const val = { id: roomidd,message:"from2"};
+      console.log(val);
+      newSocket && newSocket.emit("joinRoom", val);
     } catch (error) {
       console.log("====================================");
       console.log(error);
@@ -37,28 +49,19 @@ function Home() {
     const rand=Number(localStorage.getItem('roomID'))
     console.log(rand);
     setroomid(rand);
-    const val = { id: rand };
+    const val = { id: rand,message:"from1" };
     console.log(val);
     newSocket.emit("joinRoom", val);
       link && link.current.click();
-    
   }
   }, []);
 
-  function roomID(min = 10000, max = 99999) {
-    let difference = max - min;
-    let rand = Math.random();
-    rand = Math.floor(rand * difference);
-    rand = rand + min;
-    localStorage.setItem("roomID", rand);
-    setroomid(rand);
-  }
+  
 
   socket &&
-    socket.on("roomJoined", (data) => {
-     
+    socket.on("roomJoined",async (data) => {
       if (Number(data.id) === Number(localStorage.getItem("roomID"))) {
-        joinRoom();
+     console.log(data);
         localStorage.setItem('connected',true);
         dispatch(searchvalue(socket));
         link && link.current.click();
@@ -67,20 +70,16 @@ function Home() {
       
     });
 
-  const joinRoom = async () => {
-    const val = { id: roomid };
-    socket && socket.emit("joinRoom", val);
-   
-  };
+  // const joinRoom = async () => {
+    
+  // };
 
   return (
     <>
       <div className="app">
         <p className="title">ShareX</p>
         <p>Enter The Code</p>
-
         <button className="code-btn">{roomid}</button>
-
         <div className="line-container">
           <div className="line"></div>
           <p>OR</p>

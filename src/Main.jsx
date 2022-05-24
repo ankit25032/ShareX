@@ -8,6 +8,7 @@ import { BsDownload } from "react-icons/bs";
 import { FileIcon, defaultStyles } from "react-file-icon";
 import storage from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import {nanoid} from 'nanoid'
 
 function Main() {
   let buff = [];
@@ -41,7 +42,7 @@ const [change,setchange]=useState(1);
   },[])
 
   useEffect(()=>{
-    console.log("calling useefgf");
+  
       const data= content.current.innerHTML
         localStorage.setItem('messages',data);
   
@@ -97,11 +98,16 @@ const [change,setchange]=useState(1);
     });
 
     socket.on("clientDisconnect", (data) => {
-      link && link.current.click();
+      console.log("disconnection",data);
+                     
+                  localStorage.setItem('connected',false)
+                  localStorage.removeItem('messages')
+                  link && link.current.click();
+     
     });
 
     socket.on("send-file", (data) => {
-      console.log(data );
+     
       const ele = (
         <>
           <div className="outgoing file-outgoing ">
@@ -155,8 +161,8 @@ const [change,setchange]=useState(1);
     const roomid = localStorage.getItem("roomID");
     const ele = (
       <>
-        <div key={roomid + data} className="outgoing">
-          <p key={roomid + data + "1000"}>{data}</p>
+        <div key={nanoid(10)} className="outgoing">
+          <p key={nanoid(12)}>{data}</p>
         </div>
       </>
     );
@@ -168,8 +174,8 @@ const [change,setchange]=useState(1);
     const roomid = localStorage.getItem("roomID");
     const ele = (
       <>
-        <div key={roomid + data} className="incoming">
-          <p>{sendtxt.current.value}</p>
+        <div key={nanoid(11)} className="incoming">
+          <p key={nanoid(9)}>{sendtxt.current.value}</p>
         </div>
       </>
     );
